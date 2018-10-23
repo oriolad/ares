@@ -3,49 +3,84 @@ local sti = require "sti"
 
 function love.load()
 	love.window.setTitle("Ares - The Mars Terraforming Game")
-	love.window.setMode( 640, 640, {resizable=true, minwidth=640, minheight=640})
-	map = sti("maps/samplemap.lua")
+	love.window.setMode( 832, 640, {resizable=true, minwidth=640, minheight=640})
 
-	layer = map:addCustomLayer("Building", 2)
+    -- Add background colour and layer
+	love.graphics.setBackgroundColor(0.678, 0.522, 0.302)
+	map = sti("assets/maps/basic_map.lua")
 
-	layer.building = {
-		image = love.graphics.newImage("maps/items/faucet.png"),
-		x = 32 * 3,
-		y = 32 * 3,
+    -- Walk layer
+    walkLayer = map.layers["walk"]
+
+    -- Add sprite layer
+    spriteLayer = map:addCustomLayer("sprite", 2)
+
+	spriteLayer.sprite = {
+		image = love.graphics.newImage("assets/items/xenoDiversity/Blue/Alpha/stand.png"),
+		x = 32 * 4, -- starting x coordinate
+		y = 32 * 4, -- starting y coordinate
 		ox = 0,
 		oy = 0
 	}
 
-	layer.draw = function(self)
+	spriteLayer.draw = function(self)
+        local spriteHeight = 32
+        local spriteWidth = 16
+--        love.graphics.push()
+--        love.graphics.scale(0.5, 0.5)
 		love.graphics.draw(
-			self.building.image,
-			math.floor(self.building.x),
-			math.floor(self.building.y),
+			self.sprite.image,
+			math.floor(self.sprite.x - spriteWidth),
+			math.floor(self.sprite.y - spriteHeight),
 			0,
-			1,
-			1,
-			self.building.ox,
-			self.building.oy)
-	end
+			0.5,
+			0.5,
+			self.sprite.ox,
+			self.sprite.oy)
+        local width, height = spriteLayer.sprite.image:getDimensions()
+        local rectangle = love.graphics.rectangle("line", self.sprite.x - spriteWidth, self.sprite.y - spriteHeight,  width/2, height/2)
+
+--        love.graphics.pop()
+    end
 
 end
 
 function love.keypressed( key )
+    local movementDistance = 8
+    local x = spriteLayer.sprite.x
+    local y = spriteLayer.sprite.y
+
 	if key == "w" or key == "up" then
-		layer.building.y = layer.building.y - 32
+		y = spriteLayer.sprite.y - movementDistance
 	end
 
 	if key == "s" or key == "down" then
-		layer.building.y = layer.building.y + 32
+		y = spriteLayer.sprite.y + movementDistance
 	end
 
 	if key == "a" or key == "left" then
-		layer.building.x = layer.building.x - 32
+		x = spriteLayer.sprite.x - movementDistance
 	end
 
 	if key == "d" or key == "right" then
-		layer.building.x = layer.building.x + 32
-	end
+		x = spriteLayer.sprite.x + movementDistance
+    end
+
+    local validMove = false
+    for k, walkway in pairs(walkLayer.objects) do
+        if x > walkway.x and x < walkway.x + walkway.width and y > walkway.y and y < walkway.y + walkway.height then
+            validMove = true
+            break
+        end
+    end
+
+    if validMove == true then
+        spriteLayer.sprite.x = x
+        spriteLayer.sprite.y = y
+    end
+--    if key == "rctrl" and key == "q" then
+--        love.window.close()
+--    end
 end
 	
 
@@ -57,9 +92,9 @@ end
 function love.draw()
 	map:draw()
 
-	local mouseX = love.mouse.getX()
-	local mouseY = love.mouse.getY()
+	local sX = spriteLayer.sprite.x
+	local sY = spriteLayer.sprite.y
 
-	love.graphics.print( "X: " .. mouseX .. " Y: " .. mouseY , 300, 300, 0, 1, 1, 0, 0)
+	love.graphics.print( "X: " .. sX .. " Y: " .. sY , 300, 300, 0, 1, 1, 0, 0)
 
 end
