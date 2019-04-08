@@ -1,20 +1,23 @@
 -- This is the main.lua file --
 local sti = require "sti" 
 local movementSystem = require "component.movement"
+local globalProtection = require "global_protection"
 
-debug = false
+globalProtection.protectGlobals()
+
+debugMode = true
 
 function love.load()
     love.window.setTitle("Ares - The Mars Terraforming Game")
     love.window.setMode( 800, 600, {resizable=true, minwidth=640, minheight=640})
-    love.window.setFullscreen(true, "desktop")
+    --love.window.setFullscreen(true, "desktop")
 
     -- Add background colour and layer
     map = sti("assets/maps/basic_map.lua")
 
     local layerCount = 0
     for i,layer in ipairs(map.layers) do
-        print(i .. layer.name)
+        if debugMode then print(i .. layer.name) end
         layerCount = i
     end
     
@@ -24,22 +27,50 @@ function love.load()
     -- Walk layer
     walkLayer = map.layers["walk"]
     walkLayer.visible = false
-    if debug then walkLayer.visible = true end
+    if debugMode then 
+        -- walkLayer.visible = true
+        walkLayer.opacity = 0.3
+    end
+
+    -- print the rock layer data in the console
+    rockLayer = map.layers["rocks"]
+    rocks = {} -- array of rocks
+    print("Printing the rock layer data")
+    for row, rowTable in ipairs(rockLayer.data) do
+        for col in pairs(rowTable) do
+
+            if debugMode then 
+                print("row: " .. row)
+                print("col: " .. col) 
+            end
+
+            local x = (col-1) * map.tileheight
+            local y = (row-1) * map.tilewidth
+
+            local rock = {
+                x = x,
+                y = y,
+                width = map.tilewidth,
+                height = map.tileheight,
+                axes = calculateAxes(x, y, map.tilewidth, map.tileheight)
+            }
+            table.insert(rocks, rock)
+        end
+    end          
 
     -- Add sprite layer
     spriteLayer = map:addCustomLayer("sprite", layerCount + 1)
-
     spriteLayer.sprite = {
         image = love.graphics.newImage("assets/sprites/alien_stand.png"),
         x = 230, -- starting x coordinate
-        y = 150, -- starting y coordinate
+        y = 100, -- starting y coordinate
         ox = 0,
-        oy = 0
+        oy = 0,
+        width = 35,
+        height = 50
     }
 
     spriteLayer.draw = function(self)
-        local spriteHeight = 50
-        local spriteWidth = 35
 
         love.graphics.draw(
             self.sprite.image,
@@ -50,13 +81,31 @@ function love.load()
             1,
             self.sprite.ox,
             self.sprite.oy)
-        
-            if debug then
-                local width, height = spriteLayer.sprite.image:getDimensions()
-                local rectangleAroundSprite = love.graphics.rectangle("line", self.sprite.x, self.sprite.y,  width, height)
-            end
     end
 
+end
+
+function calculateCornerCoordinates(x, y, width, height)
+    local coordinates = {
+        topLeft = { x = x, y = y },
+        topRight = { x = x + width, y = y },
+        bottomLeft = { x = x, y = y + height },
+        bottomRight = { x = x + width, y = y + height }
+    }
+    return coordinates
+end
+
+function calculateAxes(x, y, width, height)
+    local axes = {
+        x1 = x,
+        x2 = x + width,
+        y1 = y, 
+        y2 = y + height
+    }
+    print("Calculated axes: ")
+    print("X-axis:" .. axes.x1 .. " " .. axes.x2)
+    print("Y-axis:" .. axes.y1 .. " " .. axes.y2)
+    return axes
 end
 
 function love.keypressed(key)
@@ -109,10 +158,18 @@ function love.draw()
     map:draw()
     love.graphics.setBackgroundColor(map.backgroundcolor)
 
-    if debug then 
+    if debugMode then 
         local sX = spriteLayer.sprite.x
 	    local sY = spriteLayer.sprite.y
-        love.graphics.print( "X: " .. sX .. " Y: " .. sY , 300, 300, 0, 1, 1, 0, 0) 
+        love.graphics.print( "X: " .. sX .. " Y: " .. sY , 10, 10, 0, 1, 1, 0, 0) 
+    end
+
+    -- outline sprite + rocks for debugging
+    if debugMode then
+        for i, rock in ipairs(rocks) do
+            love.graphics.rectangle("line", futureSprite.axes.x1, futureSprite.axes.y1, spriteLayer.sprite.width, spriteLayer.sprite.height)
+            love.graphics.rectangle("line", rock.axes.x1, rock.axes.y1, rock.width, rock.height)
+        end
     end
 
 end
