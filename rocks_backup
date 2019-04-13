@@ -1,0 +1,78 @@
+-- rock code
+
+-- in main.lua:
+ -- print the rock layer data in the console
+    rockLayer = map.layers["rocks"]
+    -- print(tostring(rockLayer))
+    rocks = {} -- array of rocks
+    print("Printing the rock layer data")
+    for row, rowTable in ipairs(rockLayer.data) do
+        for col, value in pairs(rowTable) do
+
+            if debugMode then 
+                -- print("row: " .. row)
+                -- print("col: " .. col) 
+                print("******************************")
+                for k, val in pairs(value) do
+                    print(k .. " : " .. tostring(val))
+                end
+                print("******************************")
+                
+            end
+
+            local x = (col-1) * map.tileheight
+            local y = (row-1) * map.tilewidth
+
+            local rock = {
+                gid = value.gid,
+                row = row,
+                col = col,
+                x = x,
+                y = y,
+                width = map.tilewidth,
+                height = map.tileheight,
+                axes = calculateAxes(x, y, map.tilewidth, map.tileheight)
+            }
+            table.insert(rocks, rock)
+        end
+    end    
+
+
+    rockLayer.type = "customlayer"
+    -- print rockLayer
+    printTable(rockLayer, 0)
+
+    function rockLayer.draw()
+         love.graphics.draw(
+            rockLayer.batches[2])
+    end
+    function rockLayer.update() 
+            love.graphics.draw(rockLayer.batches[2])
+    end
+
+        -- check for collision with the rocks
+    for i, rock in ipairs(rocks) do  
+        isColliding = collisionCheck(rock, futureSprite)
+        if isColliding then
+            print("Collision with rock!")
+            
+            table.remove(rockLayer.data, i)
+            rockLayer.data[rock.row][rock.col].qid = 0
+                print("Printing the rock layer data")
+                for row, rowTable in ipairs(rockLayer.data) do
+                    for col, value in pairs(rowTable) do
+
+                        if debugMode then 
+                            -- print("row: " .. row)
+                            -- print("col: " .. col) 
+                            print("******************************")
+                            for k, val in pairs(value) do
+                                print(k .. " : " .. tostring(val))
+                            end
+                            print("******************************")
+                            
+                        end
+                    end
+                end         
+        end
+    end

@@ -1,9 +1,9 @@
 -- This is the main.lua file --
-local sti = require "sti" 
-local movementSystem = require "component.movement"
+local sti = require "sti"
+local entityManager = require "entity_manager"
+local movementSystem = require "components.movement"
 local globalProtection = require "global_protection"
-local Entity = require "entity"
-local DrawComponent = require "component.draw_component"
+local DrawComponent = require "components.draw_component"
 
 globalProtection.protectGlobals()
 
@@ -66,7 +66,7 @@ function printTable(inputTable, level)
 end
 
 function generatePlayer()
-    alien = Entity:new("alien")
+    alien = entityManager:createNewEntity("alien")
     DrawComponent:addDrawComponentToEntity(alien, "assets/sprites/alien_stand.png", 230, 100, 35, 50)
 end
 
