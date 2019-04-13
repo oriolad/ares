@@ -17,79 +17,36 @@ local movementSystem = {}
 local function update(dt)
     -- initialize variables
     local movementSpeed = 200
-    local spriteWidth, spriteHeight = spriteLayer.sprite.image:getDimensions()
-    local currentX = spriteLayer.sprite.x
-    local currentY = spriteLayer.sprite.y
+    local currentX = alien.x
+    local currentY = alien.y
     getDirectionVector()
-    local nextX = currentX + (directionVector.x * movementSpeed * dt)
-    local nextY = currentY + (directionVector.y * movementSpeed * dt)
-    
-    -- check if the next move is within the walk layer boundaries
-    -- to do this, need to check that every corner of the sprite is within a walkway
-    local nextCoordinates = {
-        topLeft = {x = nextX, y = nextY},
-        topRight = {x = nextX + spriteLayer.sprite.width, y = nextY},
-        bottomLeft = {x = nextX, y = nextY + spriteLayer.sprite.height},
-        bottomRight = {x = nextX + spriteLayer.sprite.width, y = nextY + spriteLayer.sprite.width}
-    }
-
-    local validMove = {
-        topLeft = false,
-        topRight = false,
-        bottomLeft = false,
-        bottomRight = false
-    }
-
-    -- loop through all the walkways
-    for k, walkway in pairs(walkLayer.objects) do
-        
-        -- check if any of the corners are in the existing walkway
-        for key, spritePoint in pairs(nextCoordinates) do
-            if spritePoint.x >= walkway.x 
-                and spritePoint.x <= walkway.x + walkway.width 
-                and spritePoint.y >= walkway.y 
-                and spritePoint.y <= walkway.y + walkway.height
-            then
-                validMove[key] = true 
-                -- print("Valid Move " .. key .. " = ".. tostring(validMove[key]))
-            end
-        end     
-    end
-
-    
-    local count = 0
-    for i, v in pairs(validMove) do
-        --    print("i" .. i)
-        --    print("v" .. tostring(v))
-        --    print(count)
-        if( v ) then 
-            count = count + 1
-        end
-    end
-
-    for key, valid in pairs(validMove) do
-        -- print("Valid Move " .. key .. " = ".. tostring(validMove[key]))
-    end
-
-    if count == 4 then
-        spriteLayer.sprite.x = nextX
-        spriteLayer.sprite.y = nextY
-    end
+    local nextX = math.max(0, math.min(map.pixelWidth - alien.width, currentX + (directionVector.x * movementSpeed * dt)))
+    local nextY = math.max(0, math.min(map.pixelHeight - alien.height, currentY + (directionVector.y * movementSpeed * dt)))
 
     -- TODO: abstract intersect code to any object, including paths
     -- therefore need to refactor walkway code above to work with a generic collision checker
     futureSprite = {
         axes = {
         x1 = nextX,
-        x2 = nextX + spriteWidth,
+        x2 = nextX + alien.width,
         y1 = nextY, 
-        y2 = nextY + spriteHeight
+        y2 = nextY + alien.height
     }}
 
-    -- check for collision with the rocks
-    for i, rock in ipairs(rocks) do  
-        isColliding = collisionCheck(rock, futureSprite)
-        if isColliding then print("Collision!") end
+    -- check for any collision with the borders
+    local borderCollision = false
+    for i, border in ipairs(borders) do
+        borderCollision = collisionCheck(border, futureSprite)
+        if borderCollision then 
+            break
+        end
+    end
+
+    if borderCollision then 
+        print("Collision with border!")
+    else
+        alien.x = nextX
+        alien.y = nextY
     end
     
 end
@@ -97,7 +54,7 @@ end
 movementSystem.update = update
 
 function collisionCheck(objectA, objectB)
-    collision = false
+    local collision = false
 
        if (((objectA.axes.x1 > objectB.axes.x1 and objectA.axes.x1 < objectB.axes.x2) 
                 or (objectA.axes.x2 > objectB.axes.x1 and objectA.axes.x2 < objectB.axes.x2))
