@@ -1,9 +1,13 @@
 -- This is the main.lua file --
 local sti = require "sti"
 local entityManager = require "entity_manager"
-local movementSystem = require "components.movement"
+
 local globalProtection = require "global_protection"
-local DrawComponent = require "components.draw_component"
+local drawComponent = require "components.draw_component"
+local MovementComponent = require "components.movement_component"
+
+local MovementSystem = require "systems.movement_system"
+local DrawSystem = require "systems.draw_system"
 
 globalProtection.protectGlobals()
 
@@ -51,23 +55,40 @@ function love.load()
         end
     end     
 
-    generatePlayer()    
+    generatePlayer()
+    generateRock()
+end
+
+
+
+function generatePlayer()
+    alien = entityManager.createNewEntity("alien")
+    local alienDrawComponent = drawComponent:new("assets/sprites/alien_stand.png", 230, 100)
+    local directionVector = MovementSystem.getDirectionVector()
+    local alienMoveComponent = MovementComponent:new(230, 100, 200, directionVector, 35, 50)
+    entityManager.addComponentToEntity(alienDrawComponent, alien)
+    entityManager.addComponentToEntity(alienMoveComponent, alien)
+end
+
+function generateRock()
+    rock = entityManager.createNewEntity("rock")
+    local rockDrawComponent = drawComponent:new("assets/sprites/alien_stand.png", 250, 500)
+    local rockMoveComponent = MovementComponent:new(250, 500, 0, { x = 0, y = 0}, 32, 32 )
+
+    entityManager.addComponentToEntity(rockDrawComponent, rock)
+    entityManager.addComponentToEntity(rockMoveComponent, rock)
 end
 
 function printTable(inputTable, level)
-        for k, v in pairs(inputTable) do
-            if type(v) == "table" then
-                print(string.rep(" ", level) .. k .. " :")
-                printTable(v, level + 1)
-            else
-                print(string.rep(" ", level) .. k .. " : " .. tostring(v))
-            end
+    level = level or 0
+    for k, v in pairs(inputTable) do
+        if type(v) == "table" then
+            print(string.rep(" ", level) .. k .. " :")
+            printTable(v, level + 1)
+        else
+            print(string.rep(" ", level) .. k .. " : " .. tostring(v))
         end
-end
-
-function generatePlayer()
-    alien = entityManager:createNewEntity("alien")
-    DrawComponent:addDrawComponentToEntity(alien, "assets/sprites/alien_stand.png", 230, 100, 35, 50)
+    end
 end
 
 function love.keypressed(key)
@@ -80,58 +101,40 @@ function love.keypressed(key)
     end 
 end
 
-function getDirectionVector()
-    -- Initialize Direction Vector
-    directionVector = { x  = 0, y = 0 }
-
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
-        directionVector = { x = 0, y = -1 }
-    end
-
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
-        directionVector = { x = 0, y = 1 }
-    end
-
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
-        directionVector = { x = -1, y = 0 }
-    end
-
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
-        directionVector = { x = 1, y = 0 }
-    end
-
-end
 
 function calculateAxes(x, y, width, height)
     axes = { 
-        x1 = x,
-        x2 = x + width, 
-        y1 = y, 
-        y2 = y + height 
+        leftX = x,
+        rightX = x + width, 
+        topY = y, 
+        bottomY = y + height 
     }
     return axes
 end
 
 function love.update(dt)
-    movementSystem.update(dt)
+    MovementSystem:update(dt)
     map:update(dt)
 end
 
 function love.draw()
     love.graphics.setBackgroundColor(map.backgroundcolor)
-    local tx = math.min(map.pixelWidth - viewport.width, math.max(0, alien.x - (viewport.width/2))) 
-    local ty = math.min(map.pixelHeight - viewport.height, math.max(0, alien.y - (viewport.height/2)))
+    -- viewport logic
+    local tx = math.min(map.pixelWidth - viewport.width, math.max(0, alien.drawComponent.x - (viewport.width/2))) 
+    local ty = math.min(map.pixelHeight - viewport.height, math.max(0, alien.drawComponent.y - (viewport.height/2)))
 
-    
     map:draw(-tx, -ty)
-    DrawComponent:updateEntityCameraTranslation(alien, -tx, -ty)
-    DrawComponent:drawEntity(alien)
+    rock.drawComponent.tx = -tx
+    rock.drawComponent.ty = -ty
+    DrawSystem:draw(rock.drawComponent)
+
+    alien.drawComponent.tx = -tx
+    alien.drawComponent.ty = -ty
+    DrawSystem:draw(alien.drawComponent)
 
     if debugMode then
-
         -- print( "X: " .. spriteLayer.sprite.x .. " Y: " .. spriteLayer.sprite.y) 
-        love.graphics.rectangle("line", futureSprite.axes.x1 - tx, futureSprite.axes.y1 - ty, alien.width, alien.height) -- player            
-        -- end
+        love.graphics.rectangle("line", futureSprite.axes.leftX - tx, futureSprite.axes.topY - ty, alien.movementComponent.width, alien.movementComponent.height) -- player            
     end
 
 end

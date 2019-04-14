@@ -2,47 +2,29 @@
 
 --]]
 
-local DrawSystem = {
-	entityList = {}
-}
+local DrawSystem = {}
 DrawSystem.__index = DrawSystem
 
-function DrawSystem:addDrawComponentToEntity(entity, imagePath, x, y, width, height)
-		entity.image = love.graphics.newImage(imagePath)
-        entity.x = x -- starting x coordinate
-        entity.y = y -- starting y coordinate
-        entity.ox = 0
-        entity.oy = 0
-        entity.tx = 0
-        entity.ty = 0
-        entity.width = width
-        entity.height = height
-        entity.axes = {
-	        leftX = x,
-	        rightX = x + width,
-	        topY = y, 
-	        bottomY = y + height
-	    }
-
-	    table.insert(self.entityList, entity)
-end
-
-function DrawComponent:updateEntityCameraTranslation(entity, tx, ty)
-		entity.tx = tx
-		entity.ty = ty
+function DrawSystem.updateValue(drawComponent, key, value)
+    drawComponent[key] = updateValue
 end
 
 -- Draw a specific entity
-function DrawComponent:draw()
+function DrawSystem:draw(drawComponent)
 	love.graphics.draw(
-        entity.image,
-        math.floor(entity.x + entity.tx),
-        math.floor(entity.y + entity.ty),
-        0,
-        1,
-        1,
-        entity.ox,
-        entity.oy);
+        drawComponent.image,
+        math.floor(drawComponent.x + drawComponent.tx),
+        math.floor(drawComponent.y + drawComponent.ty),
+        0, -- TODO: add to draw component
+        1, -- TODO: add to draw component
+        1, -- TODO: add to draw component
+        drawComponent.ox,
+        drawComponent.oy);
+end
+
+function DrawSystem.print(drawComponent)
+    print("Printing draw component")
+    printTable(drawComponent, 0)
 end
 
 return DrawSystem
