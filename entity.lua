@@ -15,8 +15,9 @@ function Entity:new(id, name)
         local entity = {}
         setmetatable(entity, self)
 
-        self.id = id
-        self.name = name
+        entity.id = id
+        entity.name = name
+        entity.componentTable = {}
         return entity
 end
 

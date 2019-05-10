@@ -6,17 +6,17 @@ local Component = require "components.component"
 local DrawComponent = {}
 DrawComponent.__index = DrawComponent
 
-function DrawComponent:new(imagePath, x, y)
-        local drawComponent = Component:new("draw_component")
+function DrawComponent:new(imagePath)
+        local drawComponent = Component:new("draw")
         setmetatable(drawComponent, self)
 
         drawComponent.image = love.graphics.newImage(imagePath)
-        drawComponent.x = x -- starting x coordinate
-        drawComponent.y = y -- starting y coordinate
-        drawComponent.ox = 0
-        drawComponent.oy = 0
-        drawComponent.tx = 0
-        drawComponent.ty = 0
+        drawComponent.x = 0 -- default x position
+        drawComponent.y = 0 -- default y position
+        drawComponent.ox = 0 -- default x offset
+        drawComponent.oy = 0 -- default y offset
+        drawComponent.tx = 0 -- default x transform
+        drawComponent.ty = 0 -- default y transform
         return drawComponent
 end
 

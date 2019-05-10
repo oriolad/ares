@@ -2,27 +2,43 @@
 Generates a new generic entity and registers it
 --]]
 local Entity = require "entity"
+local Component = require "components.component"
 
 local EntityManager = {}
-EntityManager.id = -1 -- initialize entity IDs
-EntityManager.entityList = {}
+EntityManager.__index = EntityManager
+
+local entityCount = -1 -- initialize entity count
+local entityList = {}
 
 -- Create new entity with a name and a generated ID
-function EntityManager.createNewEntity(name)
-        EntityManager.id = EntityManager.id + 1
+function EntityManager.createEntity(name)
+        entityCount = entityCount + 1
         
-        local entity = Entity:new(EntityManager.id, name)
-        table.insert(EntityManager.entityList, entity)
-        print("New Entity Created:")
+        local entity = Entity:new(entityCount, name)
+        table.insert(entityList, entity)
+
+        print()
+        print("--- New Entity Created:")
         print("> ID: " .. entity.id)
         print("> Name: " .. entity.name)
         return entity
 end
 
+function EntityManager.getEntityCount()
+        return entityCount
+end
+
+function EntityManager.printEntityList()
+        for i, entity in ipairs(entityList) do
+                print("--- Printing entity list:")
+                print("> ID: " .. entity.id .. ", Name: " .. entity.name)
+        end
+end
+
 function EntityManager.deleteEntity(entityID)
-	for i, entity in ipairs(self.entityList) do
+	for i, entity in ipairs(entityList) do
 		if entity.id == entityID then
-			table.remove(self.entityList, i)
+			table.remove(entityList, i)
 		end
 	end
 end
@@ -41,17 +57,20 @@ end
 
 -- Add a component to an entity
 function EntityManager.addComponentToEntity(component, entity)
-        if component.type == "draw_component" then
-                entity.hasDraw = true
-                entity.drawComponent = component
-        elseif component.type == "movement_component" then
-                entity.hasMovement = true
-                entity.movementComponent = component
-        else
-                error("Attempt to add a component type '" .. type .. "', which does not exist!")
+      
+        -- iterate through all components in entntiy 
+        -- check if entity already has component
+        for i, value in ipairs(entity.componentTable) do
+                if component.type == value.type then
+                        error ("Entity already has the component type " .. type .. " added.")
+                end
         end
-        print("Component type " .. component.type .. " has been added to entity " .. entity.id)
-        printTable(component)
+        
+        -- add component to entity's list of components
+        table.insert(entity.componentTable, component)
+
+        print("Component type " .. component.type .. " has been added to entity " .. entity.id .. " " .. entity.name)
+        printTable(component) -- print component's variables
 end
 
 -- Get all entities with component

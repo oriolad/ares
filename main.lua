@@ -1,10 +1,12 @@
 -- This is the main.lua file --
 local sti = require "sti"
-local entityManager = require "entity_manager"
-
 local globalProtection = require "global_protection"
-local drawComponent = require "components.draw_component"
+
+local EntityManager = require "entity_manager"
+
+local DrawComponent = require "components.draw_component"
 local MovementComponent = require "components.movement_component"
+local PositionComponent = require "components.position_component"
 
 local MovementSystem = require "systems.movement_system"
 local DrawSystem = require "systems.draw_system"
@@ -38,45 +40,56 @@ function love.load()
     love.keyboard.setKeyRepeat(true)
 
     pathLayer = map.layers["path_layer"]
-    borders = {}
+    mapBorders = {}
     for row, rowTable in ipairs(pathLayer.data) do
         for col in pairs(rowTable) do
             local x = (col-1) * map.tileheight
             local y = (row-1) * map.tilewidth
 
-            local border = {
-                x = x,
-                y = y,
-                width = map.tilewidth,
-                height = map.tileheight,
-                axes = calculateAxes(x, y, map.tilewidth, map.tileheight)
-            }
-            table.insert(borders, border)
+            border = MovementSystem.calculateBorder(x, y, map.tilewidth, map.tileheight)
+            table.insert(mapBorders, border)
         end
     end     
-
+    
     generatePlayer()
     generateRock()
+
+    
 end
 
-
-
 function generatePlayer()
-    alien = entityManager.createNewEntity("alien")
-    local alienDrawComponent = drawComponent:new("assets/sprites/alien_stand.png", 230, 100)
-    local directionVector = MovementSystem.getDirectionVector()
-    local alienMoveComponent = MovementComponent:new(230, 100, 200, directionVector, 35, 50)
-    entityManager.addComponentToEntity(alienDrawComponent, alien)
-    entityManager.addComponentToEntity(alienMoveComponent, alien)
+    alien = EntityManager.createEntity("alien")
+    EntityManager.printEntityList()
+
+    local alienPositionComponent = PositionComponent:new(230, 100, 35, 50)
+    local alienDrawComponent = DrawComponent:new("assets/sprites/alien_stand.png")
+    local alienMoveComponent = MovementComponent:new(200)
+
+    EntityManager.addComponentToEntity(alienPositionComponent, alien)
+    EntityManager.addComponentToEntity(alienDrawComponent, alien)
+    EntityManager.addComponentToEntity(alienMoveComponent, alien)  
+
+    for i, v in ipairs(alien.componentTable) do
+        print("Index: " .. i .. " has type " .. v.type)
+    end
+
+    movementSystem = MovementSystem:new(alienPositionComponent, alienMoveComponent)
+
 end
 
 function generateRock()
-    rock = entityManager.createNewEntity("rock")
-    local rockDrawComponent = drawComponent:new("assets/sprites/alien_stand.png", 250, 500)
-    local rockMoveComponent = MovementComponent:new(250, 500, 0, { x = 0, y = 0}, 32, 32 )
+    rock = EntityManager.createEntity("rock")
+    EntityManager.printEntityList()
 
-    entityManager.addComponentToEntity(rockDrawComponent, rock)
-    entityManager.addComponentToEntity(rockMoveComponent, rock)
+    local rockPositionComponent = PositionComponent:new(390, 350, 32, 32)
+    local rockDrawComponent = DrawComponent:new("assets/sprites/rock.png")
+
+    EntityManager.addComponentToEntity(rockPositionComponent, rock)
+    EntityManager.addComponentToEntity(rockDrawComponent, rock)
+
+    for i, v in ipairs(rock.componentTable) do
+        print("Index: " .. i .. " has type " .. v.type)
+    end
 end
 
 function printTable(inputTable, level)
@@ -99,42 +112,46 @@ function love.keypressed(key)
     if key == "escape" or key == "q" then
         love.event.quit()
     end 
-end
 
-
-function calculateAxes(x, y, width, height)
-    axes = { 
-        leftX = x,
-        rightX = x + width, 
-        topY = y, 
-        bottomY = y + height 
-    }
-    return axes
+    if key == "d" then --set to whatever key you want to use
+      debug.debug()
+   end
 end
 
 function love.update(dt)
-    MovementSystem:update(dt)
+    movementSystem:update(dt)
     map:update(dt)
 end
 
 function love.draw()
     love.graphics.setBackgroundColor(map.backgroundcolor)
+
+    -- TODO: write code that quickly grabs a component from an entity and 
+    -- put the code in the entity manager 
+    -- local drawIndex = 0
+    -- for i, value in ipairs(alien.componentTable) do
+    --     if value.type == "draw" then
+    --         drawIndex = i
+    --         break
+    --     end
+    -- end
+
     -- viewport logic
-    local tx = math.min(map.pixelWidth - viewport.width, math.max(0, alien.drawComponent.x - (viewport.width/2))) 
-    local ty = math.min(map.pixelHeight - viewport.height, math.max(0, alien.drawComponent.y - (viewport.height/2)))
+    local tx = math.min(map.pixelWidth - viewport.width, math.max(0, alien.componentTable[1].x - (viewport.width/2))) 
+    local ty = math.min(map.pixelHeight - viewport.height, math.max(0, alien.componentTable[1].y - (viewport.height/2)))
 
     map:draw(-tx, -ty)
-    rock.drawComponent.tx = -tx
-    rock.drawComponent.ty = -ty
-    DrawSystem:draw(rock.drawComponent)
 
-    alien.drawComponent.tx = -tx
-    alien.drawComponent.ty = -ty
-    DrawSystem:draw(alien.drawComponent)
+    alien.componentTable[2].tx = -tx
+    alien.componentTable[2].ty = -ty
+    
+    rock.componentTable[2].tx = -tx
+    rock.componentTable[2].ty = -ty
+    
 
-    if debugMode then
-        -- print( "X: " .. spriteLayer.sprite.x .. " Y: " .. spriteLayer.sprite.y) 
-        love.graphics.rectangle("line", futureSprite.axes.leftX - tx, futureSprite.axes.topY - ty, alien.movementComponent.width, alien.movementComponent.height) -- player            
-    end
-
+    DrawSystem:draw(rock.componentTable[2], rock.componentTable[1])
+    DrawSystem:draw(alien.componentTable[2], alien.componentTable[1])
+    
+    DrawSystem.outlineEntity(alien.componentTable[2], alien.componentTable[1])
+    
 end
