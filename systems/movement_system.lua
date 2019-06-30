@@ -11,19 +11,38 @@ Inputs for the movement system will include:
 
     where distance and direction can be controlled by keypress for certain entities
 --]]
-
+local EntityManager = require "entity_manager"
 
 local MovementSystem = {}
 MovementSystem.__index = MovementSystem
 
-function MovementSystem:new(positionComponent, movementComponent)
+function MovementSystem:new(positionComponent, movementComponent, staticBorderLayer)
     local movementSystem = {}
     setmetatable(movementSystem, self)
 
+    movementSystem.entitiesWithMovement = EntityManager.getAllEntitiesWithComponentType("movement")
+    movementSystem.entitiesWithPosition = EntityManager.getAllEntitiesWithComponentType("position")
+
     movementSystem.positionComponent = positionComponent
     movementSystem.movementComponent = movementComponent
+    movementSystem.mapBorderTable = MovementSystem.initializeStaticBorderTable(staticBorderLayer)
 
     return movementSystem
+end
+
+function MovementSystem.initializeStaticBorderTable(staticBorderLayer)
+    local mapBorderTable = {}
+    for row, rowTable in ipairs(staticBorderLayer.data) do
+        for col in pairs(rowTable) do
+            local x = (col-1) * map.tileheight
+            local y = (row-1) * map.tilewidth
+
+            border = MovementSystem.calculateBorder(x, y, map.tilewidth, map.tileheight)
+            table.insert(mapBorderTable, border)
+        end
+    end    
+
+    return mapBorderTable
 end
 
 function MovementSystem.getDirectionVector()
@@ -72,7 +91,7 @@ function MovementSystem:update(dt)
         -- print("Collision with rock!")
     -- end
 
-    borderCollision = MovementSystem.collisionCheckWithMapBorders(self.movementComponent, self.positionComponent, mapBorders, entityFutureBoundary)
+    borderCollision = MovementSystem.collisionCheckWithMapBorders(self.movementComponent, self.positionComponent, self.mapBorderTable, entityFutureBoundary)
     if borderCollision then
         print("Collision with border")
     else

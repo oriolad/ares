@@ -1,13 +1,13 @@
 --[[ Draw Component
 
 --]]
-local Component = require "components.component"
+local ComponentManager = require "components.component_manager"
 
 local DrawComponent = {}
 DrawComponent.__index = DrawComponent
 
 function DrawComponent:new(imagePath)
-        local drawComponent = Component:new("draw")
+        local drawComponent = ComponentManager.createComponent("draw")
         setmetatable(drawComponent, self)
 
         drawComponent.image = love.graphics.newImage(imagePath)

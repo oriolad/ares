@@ -1,13 +1,13 @@
 --[[ Position Component
 
 --]]
-local Component = require "components.component"
+local ComponentManager = require "components.component_manager"
 
 local PositionComponent = {}
 PositionComponent.__index = PositionComponent
 
 function PositionComponent:new(x, y, width, height)
-        local positionComponent = Component:new("position")
+        local positionComponent = ComponentManager.createComponent("position")
         setmetatable(positionComponent, self)
 
         positionComponent.x = x -- will be used as starting x coordinate

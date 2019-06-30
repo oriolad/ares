@@ -4,13 +4,13 @@ movement parameters which are properties of the entity
     (3b) distance
     (3c) direction
 --]]
-local Component = require "components.component"
+local ComponentManager = require "components.component_manager"
 
 local MovementComponent = {}
 MovementComponent.__index = MovementComponent
 
 function MovementComponent:new(speed)
-    local movementComponent = Component:new("movement")
+    local movementComponent = ComponentManager.createComponent("movement")
     setmetatable(movementComponent, self)
 
     movementComponent.currentX = 0 -- default current x value

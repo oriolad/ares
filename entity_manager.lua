@@ -2,7 +2,7 @@
 Generates a new generic entity and registers it
 --]]
 local Entity = require "entity"
-local Component = require "components.component"
+local ComponentManager = require "components.component_manager"
 
 local EntityManager = {}
 EntityManager.__index = EntityManager
@@ -74,5 +74,36 @@ function EntityManager.addComponentToEntity(component, entity)
 end
 
 -- Get all entities with component
+function EntityManager.getAllEntitiesWithComponentType(componentType)
+        local entitiesWithComponentType = {}
+
+        -- check that componentType is valid
+        if ComponentManager.isValidType(componentType) then
+                print("Checking which entities have component: " .. componentType)
+        else
+                error("Component type " .. componentType .. " does not exist.")
+        end
+
+        -- iterate through all entities
+        for i, entity in ipairs(entityList) do
+                print("Checking Entity ID: " .. entity.id .. ", Name: " .. entity.name)
+
+                local entityHasComponent = false
+                for i, component in ipairs(entity.componentTable) do
+                        if component.type == componentType then
+                                entityHasComponent = true
+                        end
+                end
+
+                if entityHasComponent then
+                        print("Entity " .. entity.id .. " " .. entity.name .. " has component " .. componentType .. ". Adding to list.")
+                        table.insert(entitiesWithComponentType, entity)
+                else
+                        print("Entity " .. entity.id .. " " .. entity.name .. " does nto have component " .. componentType .. ". Excluding from list.")
+                end
+        end
+
+        return entitiesWithComponentType
+end
 
 return EntityManager

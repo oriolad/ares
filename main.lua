@@ -28,7 +28,7 @@ function love.load()
     map.pixelWidth = map.width * map.tileheight
     map.pixelHeight = map.height * map.tileheight
 
-
+    -- TODO: Move layerCount somewhere else
     local layerCount = 0
     for i,layer in ipairs(map.layers) do
         if debugMode then print(i .. " : " .. layer.name) end
@@ -39,22 +39,12 @@ function love.load()
     -- Keyboard Properties
     love.keyboard.setKeyRepeat(true)
 
-    pathLayer = map.layers["path_layer"]
-    mapBorders = {}
-    for row, rowTable in ipairs(pathLayer.data) do
-        for col in pairs(rowTable) do
-            local x = (col-1) * map.tileheight
-            local y = (row-1) * map.tilewidth
-
-            border = MovementSystem.calculateBorder(x, y, map.tilewidth, map.tileheight)
-            table.insert(mapBorders, border)
-        end
-    end     
+    pathLayer = map.layers["path_layer"]  
     
     generatePlayer()
     generateRock()
 
-    
+    EntityManager.getAllEntitiesWithComponentType("draw");
 end
 
 function generatePlayer()
@@ -73,7 +63,7 @@ function generatePlayer()
         print("Index: " .. i .. " has type " .. v.type)
     end
 
-    movementSystem = MovementSystem:new(alienPositionComponent, alienMoveComponent)
+    movementSystem = MovementSystem:new(alienPositionComponent, alienMoveComponent, pathLayer)
 
 end
 

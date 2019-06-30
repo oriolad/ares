@@ -4,25 +4,14 @@
 local Component = {}
 Component.__index = Component
 
-local component_type = { 
-    "position",
-    "draw",
-    "movement"
-}
-
 -- Create a new component
-function Component:new(type)
+function Component:new(id, type)
         local component = {}
         setmetatable(component, self)
 
-        for i, value in ipairs(component_type) do
-            if type == value then
-                component.type = type
-                return component
-            end           
-        end
-        error("Attempt to create a component type '" .. type .. "', which does not exist!")
-
+        component.id = id
+        component.type = type
+        return component
 end
 
 return Component
