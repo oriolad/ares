@@ -55,7 +55,8 @@ function MovementSystem:update(dt)
     
     self.movementComponent.currentX = self.positionComponent.x;
     self.movementComponent.currentY = self.positionComponent.y;
-    directionVector = MovementSystem.getDirectionVector()
+    directionVector = MovementSystem.getDirectionVector();
+
     self.movementComponent.nextX = math.max(0, math.min(map.pixelWidth - self.positionComponent.width, self.movementComponent.currentX + (directionVector.x * self.movementComponent.speed * dt)));
     self.movementComponent.nextY = math.max(0, math.min(map.pixelHeight - self.positionComponent.height, self.movementComponent.currentY + (directionVector.y * self.movementComponent.speed * dt)));
 
@@ -63,31 +64,26 @@ function MovementSystem:update(dt)
     entityCurrentBoundary = MovementSystem.calculateBorder(self.movementComponent.currentX, self.movementComponent.currentY, self.positionComponent.width, self.positionComponent.height);
     entityFutureBoundary = MovementSystem.calculateBorder(self.movementComponent.nextX, self.movementComponent.nextY, self.positionComponent.width, self.positionComponent.height);
 
-    -- check for any collision with the borders
-    local borderCollision = false
-    for i, border in ipairs(mapBorders) do
-        borderCollision = collisionCheck(entityFutureBoundary, border)
-        if borderCollision then 
-            break
-        end
-    end
-
-    if borderCollision then 
-        print("Collision with border!")
-    else
-        self.movementComponent.currentX = self.movementComponent.nextX
-        self.movementComponent.currentY = self.movementComponent.nextY
-    
-        alien.componentTable[1].x = self.movementComponent.nextX -- hardcoded!!
-        alien.componentTable[1].y = self.movementComponent.nextY -- hardcoded!!
-    end
-    
     -- hard-coded collision check with "rock" entity
-    -- isColliding = collisionCheck(rock.movementComponent.currentBorders, futureBorders)
+    -- TODO: move to a collision system
+    -- rockBoundary = MovementSystem.calculateBorder(rock.componentTable[1].x, rock.componentTable[1].y, rock.componentTable[1].width, rock.componentTable[1].height)
+    -- isColliding = collisionCheck(rockBoundary, entityFutureBoundary)
     -- if isColliding then
-    --     print("Collision with rock!")
+        -- print("Collision with rock!")
     -- end
-        
+
+    borderCollision = MovementSystem.collisionCheckWithMapBorders(self.movementComponent, self.positionComponent, mapBorders, entityFutureBoundary)
+    if borderCollision then
+        print("Collision with border")
+    else
+        -- Update movement component with next movement
+        self.movementComponent.currentX = self.movementComponent.nextX;
+        self.movementComponent.currentY = self.movementComponent.nextY;
+
+        -- Position Component is always tracking the latest movement updates
+        self.positionComponent.x = self.movementComponent.currentX;
+        self.positionComponent.y = self.movementComponent.currentY;
+    end
 end
 
 function MovementSystem.print(movementComponent)
@@ -105,6 +101,7 @@ function MovementSystem.calculateBorder(x, y, width, height)
     return border
 end
 
+-- Move this function to a collision system
 function collisionCheck(objectA, objectB)
     local collision = false
 
@@ -124,6 +121,18 @@ function collisionCheck(objectA, objectB)
     return collision
 end
 
+-- Move this function to a collision system
+function MovementSystem.collisionCheckWithMapBorders(movementComponent, positionComponent, mapBorders, entityFutureBoundary)
+    local borderCollision = false
+    for i, border in ipairs(mapBorders) do
+        borderCollision = collisionCheck(border, entityFutureBoundary)
 
+        if borderCollision then
+            break
+        end
+    end
 
-return MovementSystem
+    return borderCollision
+end
+
+return MovementSystem 
